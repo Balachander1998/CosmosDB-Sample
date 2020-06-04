@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +14,12 @@ namespace Azure_CosmosDB_Sample
         private static string endpointURL = "https://boldbicosmosdemo.documents.azure.com:443/";
         private static string primaryKey = "spBT3VwoX13LagGqbO7RqWdLf96RIJnAGGIa8ouGiSllBrLgG1F7CcmrIDLg6ZsOG28WD9vQGKzpZmEi1di7sg==";
         private static DocumentClient documentClient = new DocumentClient(new Uri(endpointURL), primaryKey);
+       
+       
         static void Main(string[] args)
         {
-           /// getAllProducts();
-             getAllCollections();
+            getAllProducts();
+            //getAllCollections();
             //getCollectionFields();
             Console.ReadKey();
         }
@@ -27,13 +30,21 @@ namespace Azure_CosmosDB_Sample
             option.EnableCrossPartitionQuery = true;
             string sqlQuery = "Select * from productList";
             var response=documentClient.CreateDocumentQuery(uri, option, sqlQuery).ToList();
-            foreach(Document value in response)
+            JArray jArray = JArray.FromObject(response);  
+            foreach(JObject jObject in jArray)
             {
-                Console.WriteLine(value.Id);
-                Console.WriteLine(value.GetType());
-                //Console.WriteLine(value);
-               // Console.WriteLine("\n");
+                jObject.Remove("_rid");
+                jObject.Remove("_self");
+                jObject.Remove("_ts");
+                jObject.Remove("_etag");
+                foreach (JProperty prop in jObject.Properties())
+                {
+                   Console.WriteLine(prop.Name+" "+prop.Value.Type);                          
+                }
             }
+                
+               
+            
             
         }
         private static async Task getAllCollections()
@@ -43,11 +54,12 @@ namespace Azure_CosmosDB_Sample
             int count = 0;
             foreach(DocumentCollection collection in collections)
             {
-                Console.WriteLine(collection);
+                Console.WriteLine(collection.Id);
                 count = count + 1;
-               
+                Console.WriteLine(count);
             }
             
+           
         }
     }
 }
